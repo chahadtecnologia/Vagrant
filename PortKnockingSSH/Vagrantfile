@@ -1,0 +1,32 @@
+Vagrant.configure("2") do |config|
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+    end
+    config.vm.provision "shell", inline: "swapoff -a"
+    config.vm.define "ubuntu", primary: true do |ubuntuserver|
+      ubuntuserver.vm.hostname = "ubuntuserver"
+      ubuntuserver.vm.box = "ubuntu/xenial64"
+      ubuntuserver.vm.network "public_network", :bridge => 'eno1', ip: "192.168.1.15", use_dhcp_assigned_default_route: true
+      ubuntuserver.vm.provision "shell",
+      run: "always",
+      inline: "apt-get update -y && apt-get install net-tools && route add default gw 192.168.1.1 && route del default gw 10.0.2.2"
+      ubuntuserver.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
+      ubuntuserver.vm.provision "file", source: "./knockd.conf", destination: "~/knockd.conf"
+      ubuntuserver.vm.provision "file", source: "./knockd", destination: "~/knockd"
+      ubuntuserver.vm.provision "shell",
+      inline:   "apt-get update -y && apt-get install -yq vim tree net-tools curl knockd && \
+                mv /home/vagrant/knockd.conf /etc/knockd.conf && mv /home/vagrant/knockd /etc/default/knockd && \
+                echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections && \
+                echo iptables-persistent iptables-persistent/autosave_v6 boolean false | debconf-set-selections && \
+                apt-get -y install iptables-persistent && \
+                iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 22 -j DROP && \
+                iptables-save > /etc/iptables/rules.v4 && \
+                cd /home/vagrant/.ssh && cat id_rsa.pub >> authorized_keys && chmod 0400 id_rsa.pub && \
+                systemctl start knockd && systemctl enable knockd && \
+                init 6"
+
+               
+    end
+  end
+  

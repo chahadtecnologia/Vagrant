@@ -1,0 +1,26 @@
+Vagrant.configure("2") do |config|
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+    end
+    config.vm.provision "shell", inline: "swapoff -a"
+    config.vm.define "ubuntu", primary: true do |ubuntuserver|
+      ubuntuserver.vm.hostname = "ubuntuserver"
+      ubuntuserver.vm.box = "bento/ubuntu-22.04"
+      ubuntuserver.vm.network "public_network", :bridge => 'eno1', ip: "192.168.1.20", use_dhcp_assigned_default_route: true
+      ubuntuserver.vm.provision "shell",
+      run: "always",
+      inline: "apt-get update -y && apt-get install -y net-tools debconf-utils && route add default gw 192.168.1.1 && route del default gw 10.0.2.2"
+      ubuntuserver.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
+      ubuntuserver.vm.provision "file", source: "./jail.local", destination: "./jail.local"
+      ubuntuserver.vm.provision "shell",
+      inline: "echo 'proftpd-basic shared/proftpd/inetd_or_standalone select standalone' | debconf-set-selections && \
+              apt-get update -y && apt-get install -y vim tree net-tools curl fail2ban proftpd && \
+              sed -i 's/# DefaultRoot/DefaultRoot /g' /etc/proftpd/proftpd.conf && \
+              mv ./jail.local /etc/fail2ban/ && \
+              systemctl start fail2ban && systemctl enable fail2ban && \
+              systemctl restart proftpd && \
+              cd /home/vagrant/.ssh && cat id_rsa.pub >> authorized_keys && chmod 0400 id_rsa.pub"  
+    end
+  end
+  

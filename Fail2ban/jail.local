@@ -1,0 +1,17 @@
+[sshd]
+enabled = true
+bantime = 30m
+maxretry = 3
+findtime = 30m
+port = ssh
+filter = sshd 
+logpath = /var/log/auth.log
+
+[proftpd]
+enabled = true
+bantime = 30m
+maxretry = 3
+findtime = 30m
+port = ftp,ftp-data,ftps,ftps-data
+filter = proftpd
+logpath = /var/log/proftpd/proftpd.log
