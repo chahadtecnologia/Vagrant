@@ -1,0 +1,19 @@
+Vagrant.configure("2") do |config|
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 4096
+      v.cpus = 2
+    end
+    config.vm.provision "shell", inline: "swapoff -a"
+    config.vm.define "ubuntu", primary: true do |wazuhserver|
+      wazuhserver.vm.hostname = "wazuhserver"
+      wazuhserver.vm.box = "ubuntu/jammy64"
+      wazuhserver.vm.network "public_network", :bridge => 'eno1', ip: "192.168.0.20", use_dhcp_assigned_default_route: true
+      wazuhserver.vm.provision "shell",
+      run: "always",
+      inline: "apt-get update -y && apt-get install -y net-tools curl wget && route add default gw 192.168.0.1 && route del default gw 10.0.2.2"
+      wazuhserver.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
+      wazuhserver.vm.provision "shell",
+      inline: "cd /home/vagrant/.ssh && cat id_rsa.pub >> authorized_keys && chmod 0400 id_rsa.pub"
+    end
+  end
+  
