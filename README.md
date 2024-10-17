@@ -1,2 +1,2 @@
-# vagrant
-Repositório dedicado ao Vagrant
+# Vagrant
+Repository dedicated to Vagrant

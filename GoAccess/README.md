@@ -1,53 +1,52 @@
-# Procedimento de configuração do GoAccess
-## Soluções utilizadas para o laboratório do GoAccess
+# GoAccess configuration procedure
+## Solutions used for the GoAccess lab
 
-- Vagrant (versão: 2.2.19)
-- Virtualbox (versão: 6.1)
-- Docker (versão: 20.10.7)
-- Docker Compose (versão: 1.25.4)
+- Vagrant (version: 2.2.19)
+- Virtualbox (version: 6.1)
+- Docker (version: 20.10.7)
+- Docker Compose (version: 1.25.4)
 
-## Configurações necessárias antes de criar a máquina virtual via Vagrant
+## Configuration required before creating the virtual machine via Vagrant
 
-Antes de criar a máquina virtual, as etapas abaixo serão necessárias:
+Before creating the virtual machine, the following steps will be necessary:
 
-- Ajustar o arquivo do ***Vagrantfile*** com o endereço de rede de sua preferência (endereço da sua rede local);
-- Ajustar as configurações de recursos do servidor virtual (processador e memória) caso necessário;
-- Criar as chaves SSH para que o acesso ao servidor virtual seja  possível, usando o usuário ***"vagrant"***;
+- Adjust the ***Vagrantfile*** file with the network address of your preference (your local network address);
+- Adjust the virtual server resource settings (processor and memory) if necessary;
+- Create SSH keys to access the virtual server, using the ***"vagrant"*** user;
 
-### Criando chaves SSH
-Caso você não tenha uma chave SSH configurada para o seu usuário do sistema Linux, utilize o comando abaixo para gerar as chaves:
+### Creating SSH Keys
+If you do not have an SSH key configured for your Linux system user, use the command below to generate the keys:
 
 > ssh-keygen -t rsa -b 4096
 
-***Obs.: Mantenha o padrão durante a configuração da chave SSH, sem necessidade de adição de senha para a chave. Lembrando também de executar o comando utilizando o usuário do sistema que será usado para a configuração do ambiente.***
+***Note: Keep the default when configuring the SSH key, there is no need to add a passphrase for the key. Also remember to run the command using system user that will be used to configure the environment.***
 
-## Criando a máquina virtual
+## Creating the virtual machine
 
-Uma vez que todas as configurações estiverem ajustadas, execute o comando abaixo para iniciar o processo de configuração do ambiente:
+After all the settings have been adjusted, run the command below to start the environment configuration process:
 
 > vagrant up
 
-## Acessando a máquina virtual
+## Accessing the virtual machine
 
-Com a máquina virtual devidamente configurada, basta utilizar o comando abaixo para acessar o sistema operacional (caso necessário):
+With the virtual machine properly configured, use the command below to access the operating system (if necessary):
 
-> ssh vagrant@<ENDEREÇO_IP_MÁQUINA_VIRTUAL>
+> ssh vagrant@<IP_OF_VIRTUAL_MACHINE>
 
-***Exemplo:*** ssh vagrant@192.168.0.100
+***Example:*** ssh vagrant@192.168.0.100
 
-## Acessando o Wordpress
+## Accessing Wordpress
 
-Para acessar o Wordpress basta utilizar o endereço usado na configuração do servidor virtual informando a porta ***8081*** no navegador (browser). Segue exemplo abaixo:
+To access Wordpress use the ip address from virtual server, typing port ***8081*** in the browser. See the example below:
 
-> http://<ENDEREÇO_IP_MÁQUINA_VIRTUAL>:8081
+> http://<IP_ADDRESS_VIRTUAL_MACHINE>:8081
 
-***Exemplo:*** http://192.168.0.100:8081
+***Example:*** http://192.168.0.100:8081
 
-## Acessando o GoAccess via navegador (browser)
+## Accessing GoAccess via browser
 
-Para acessar o painel do GoAccess via navegador, utilize o endereço abaixo:
+To access the GoAccess dashboard via browser, use the address below:
 
-> http://<<ENDEREÇO_IP_MÁQUINA_VIRTUAL>>8081/reports/reports.html
+> http://<<IP_ADDRESS_VIRTUAL_MACHINE>>8081/reports/reports.html
 
-***Exemplo:*** http://192.168.0.100:8081/reports/reports.html
-
+***Example:*** http://192.168.0.100:8081/reports/reports.html
