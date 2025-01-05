@@ -1,4 +1,4 @@
-# Dedicated Project to install Kubernetes using Vagrant and VirtualBox
+# Dedicated Project to install Kubernetes (v1.30) using Vagrant and VirtualBox
 ## Create by Chahad Tecnologia - version 1.0.0
 
 ![Kubernetes Logo](./images/Kubernetes-Logo.png)
