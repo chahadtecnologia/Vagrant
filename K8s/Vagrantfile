@@ -1,0 +1,110 @@
+Vagrant.configure("2") do |config|
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+    end
+    config.vm.provision "shell", inline: "swapoff -a"
+    config.vm.define "kubecontrolplane", primary: true do |kubecontrolplane|
+      kubecontrolplane.vm.hostname = "kubecontrolplane"
+      kubecontrolplane.vm.box = "ubuntu/jammy64"
+      kubecontrolplane.vm.network "public_network", :bridge => 'eno1', ip: "192.168.0.20", use_dhcp_assigned_default_route: true
+      kubecontrolplane.vm.provision "shell",
+      run: "always",
+      inline: "apt-get update -y && apt-get install -y net-tools curl wget"
+      kubecontrolplane.vm.provision "file", source: "~/.ssh/chahad.pub", destination: "~/.ssh/chahad.pub"
+      kubecontrolplane.vm.provision "file", source: "./kubecontrolNetwork.yaml", destination: "~/50-vagrant.yaml"
+      kubecontrolplane.vm.provision "file", source: "./k8sConfig.sh", destination: "~/k8sConfig.sh"
+      kubecontrolplane.vm.provision "shell",
+      inline: "echo -e '=====> Setting SSH Keys <=====' && \
+              cd /home/vagrant/.ssh && cat chahad.pub >> authorized_keys && chmod 0400 chahad.pub && \
+              echo -e '=====> Installing apt packages <=====' && \
+              apt-get update && apt-get install -y vim net-tools apt-transport-https ca-certificates curl gpg software-properties-common && \
+              echo -e '=====> Installing container runtime CRI-O <=====' && \
+              curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg && \
+              echo 'deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/cri-o.list && \
+              echo -e '=====> Activating ip_forward on Linux <=====' && \
+              sysctl -w net.ipv4.ip_forward=1 && sed -i '/^#\s*net.ipv4.ip_forward\s*=\s*1/s/^#\s*//g' /etc/sysctl.conf && \
+              echo -e '=====> Installing Kubernetes packages <====='
+              curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg && \
+              echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list && \
+              apt-get update -y && apt-get install -y cri-o kubelet kubeadm kubectl && \
+              systemctl enable crio.service && systemctl start crio.service && \
+              echo -e '=====> Initializing K8s and CRI-O services <=====' && \
+              apt-mark hold kubelet kubeadm kubectl && systemctl enable --now kubelet && \
+              echo -e '=====> Adjusting Network configuraion on Linux <=====' && \
+              mv /etc/netplan/50-vagrant.yaml /etc/netplan/50-vagrant.yaml_original && mv /home/vagrant/50-vagrant.yaml /etc/netplan/ && \
+              echo -e '=====> Setting hostnames no /etc/hosts <=====' && \
+              echo '192.168.0.20 kubecontrolplane kubernetes' >> /etc/hosts && echo '192.168.0.21 kubenode1' >> /etc/hosts && echo '192.168.0.22 kubenode2' >> /etc/hosts && \
+              echo -e '=====> Deactivating apparmor and ufw on Linux <=====' && \
+              systemctl disable apparmor && systemctl disable ufw && init 0"
+
+    end
+    config.vm.provision "shell", inline: "swapoff -a"
+    config.vm.define "kubenode1", primary: true do |kubenode1|
+      kubenode1.vm.hostname = "kubenode1"
+      kubenode1.vm.box = "ubuntu/jammy64"
+      kubenode1.vm.network "public_network", :bridge => 'eno1', ip: "192.168.0.21", use_dhcp_assigned_default_route: true
+      kubenode1.vm.provision "shell",
+      run: "always",
+      inline: "apt-get update -y && apt-get install -y net-tools curl wget"
+      kubenode1.vm.provision "file", source: "~/.ssh/chahad.pub", destination: "~/.ssh/chahad.pub"
+      kubenode1.vm.provision "file", source: "./kubenode1Network.yaml", destination: "~/50-vagrant.yaml"
+      kubenode1.vm.provision "shell",
+      inline: "echo -e '=====> Setting SSH Keys <=====' && \
+              cd /home/vagrant/.ssh && cat chahad.pub >> authorized_keys && chmod 0400 chahad.pub && \
+              echo -e '=====> Installing apt packages <=====' && \
+              apt-get update && apt-get install -y vim net-tools apt-transport-https ca-certificates curl gpg software-properties-common && \
+              echo -e '=====> Installing container runtime CRI-O <=====' && \
+              curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg && \
+              echo 'deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/cri-o.list && \
+              echo -e '=====> Activating ip_forward on Linux <=====' && \
+              sysctl -w net.ipv4.ip_forward=1 && sed -i '/^#\s*net.ipv4.ip_forward\s*=\s*1/s/^#\s*//g' /etc/sysctl.conf && \
+              echo -e '=====> Installing Kubernetes packages <====='
+              curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg && \
+              echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list && \
+              apt-get update -y && apt-get install -y cri-o kubelet kubeadm && \
+              systemctl enable crio.service && systemctl start crio.service && \
+              echo -e '=====> Initializing K8s and CRI-O services <=====' && \
+              apt-mark hold kubelet kubeadm && systemctl enable --now kubelet && \
+              echo -e '=====> Adjusting Network configuraion on Linux <=====' && \
+              mv /etc/netplan/50-vagrant.yaml /etc/netplan/50-vagrant.yaml_original && mv /home/vagrant/50-vagrant.yaml /etc/netplan/ && \
+              echo -e '=====> Setting hostnames no /etc/hosts <=====' && \
+              echo '192.168.0.20 kubecontrolplane kubernetes' >> /etc/hosts && echo '192.168.0.21 kubenode1' >> /etc/hosts && echo '192.168.0.22 kubenode2' >> /etc/hosts && \
+              echo -e '=====> Deactivating apparmor and ufw on Linux <=====' && \
+              systemctl disable apparmor && systemctl disable ufw && init 0"
+    end
+    config.vm.provision "shell", inline: "swapoff -a"
+    config.vm.define "kubenode2", primary: true do |kubenode2|
+      kubenode2.vm.hostname = "kubenode2"
+      kubenode2.vm.box = "ubuntu/jammy64"
+      kubenode2.vm.network "public_network", :bridge => 'eno1', ip: "192.168.0.22", use_dhcp_assigned_default_route: true
+      kubenode2.vm.provision "shell",
+      run: "always",
+      inline: "apt-get update -y && apt-get install -y net-tools curl wget"
+      kubenode2.vm.provision "file", source: "~/.ssh/chahad.pub", destination: "~/.ssh/chahad.pub"
+      kubenode2.vm.provision "file", source: "./kubenode2Network.yaml", destination: "~/50-vagrant.yaml"
+      kubenode2.vm.provision "shell",
+      inline: "echo -e '=====> Setting SSH Keys <=====' && \
+              cd /home/vagrant/.ssh && cat chahad.pub >> authorized_keys && chmod 0400 chahad.pub && \
+              echo -e '=====> Installing apt packages <=====' && \
+              apt-get update && apt-get install -y vim net-tools apt-transport-https ca-certificates curl gpg software-properties-common && \
+              echo -e '=====> Installing container runtime CRI-O <=====' && \
+              curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg && \
+              echo 'deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/cri-o.list && \
+              echo -e '=====> Activating ip_forward on Linux <=====' && \
+              sysctl -w net.ipv4.ip_forward=1 && sed -i '/^#\s*net.ipv4.ip_forward\s*=\s*1/s/^#\s*//g' /etc/sysctl.conf && \
+              echo -e '=====> Installing Kubernetes packages <====='
+              curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg && \
+              echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list && \
+              apt-get update -y && apt-get install -y cri-o kubelet kubeadm && \
+              systemctl enable crio.service && systemctl start crio.service && \
+              echo -e '=====> Initializing K8s and CRI-O services <=====' && \
+              apt-mark hold kubelet kubeadm && systemctl enable --now kubelet && \
+              echo -e '=====> Adjusting Network configuraion on Linux <=====' && \
+              mv /etc/netplan/50-vagrant.yaml /etc/netplan/50-vagrant.yaml_original && mv /home/vagrant/50-vagrant.yaml /etc/netplan/ && \
+              echo -e '=====> Setting hostnames no /etc/hosts <=====' && \
+              echo '192.168.0.20 kubecontrolplane kubernetes' >> /etc/hosts && echo '192.168.0.21 kubenode1' >> /etc/hosts && echo '192.168.0.22 kubenode2' >> /etc/hosts && \
+              echo -e '=====> Deactivating apparmor and ufw on Linux <=====' && \
+              systemctl disable apparmor && systemctl disable ufw && init 0"
+    end
+end
