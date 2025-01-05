@@ -73,6 +73,9 @@ With all the files properly adjusted, the next step will be to create the virtua
 
 > vagrant up
 
+#### Command example
+![vagrant up](./images/VagrantUp.png)
+
 This process may take a few minutes, depending on the amount of hardware available on your computer. At the end of the virtual machine configuration process, all of them will be turned off. This process is necessary to make adjustments to the network interfaces of each machine in VirtualBox. By default, VirtualBox creates a **NAT** type interface and this interface should be disabled, keeping only the **bridged** type network interfaces.
 
 To adjust the interfaces in each virtual machine, access the configuration option in VirtualBox (**Settings**). In the network options, disable "**Adapter 1**" and in "**Adapter 2**" access the advanced mode and change the "**Promiscuous Mode**" option to "**Allow All**".
@@ -103,6 +106,15 @@ The next step will be to run the configuration file "**k8sConfig.sh**". To run t
 After the script has finished running, the next step is to add the other two servers to Kubernetes, to be used as nodes to run the pods (applications).
 
 At the end of the script execution process, a file called "**kubeadm_init_output**" will be generated, and you will need to copy the "**kubeadm join**" command into it. Copy the entire command and run it on each virtual machine using **sudo**.
+
+#### k8sConfig
+![K8sConfig](./images/kubeadmInitOutput.png)
+
+#### kubeadm init file output
+![kubeadm join](./images/kubeadmJoin.png)
+
+#### Running kubeadm join on node
+![kubeadm join](./images/kubeadmJoin2.png)
 
 After a few seconds, the two virtual machines, which will be used as nodes to maintain the pods, will be ready for use. To validate if the nodes are ready you can use the command below:
 
